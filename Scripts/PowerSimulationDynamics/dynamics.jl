@@ -1,5 +1,7 @@
 using Pkg
-Pkg.activate("./")
+DIR_DYNAMIC = "Scripts/PowerSimulationDynamics"
+Pkg.activate(DIR_DYNAMIC)
+
 using PowerSystems
 using PowerSimulations
 using PowerSimulationsDynamics
@@ -57,7 +59,7 @@ end
 # PSY.transform_single_time_series!(sys_da, 24, Hour(1))
 
 
-# file_path  = "/Users/hei06j/Documents/repositories/remote/NEM2000synthetic/data/matpower/snem1803.m"
+# file_path  = joinpath(pwd(), "snem1803.m")
 # file_path  = joinpath(pwd(), "snem197.m") # not stable
 file_path  = joinpath(pwd(), "snemNSW.m") # stable - converging
 # file_path  = joinpath(pwd(), "snemVIC.m") # not stable
@@ -119,7 +121,7 @@ for (i, gen) in pm_data.data["gen"]
         Exciter_id = findall(x->x=="IEEET1_"*gen["name"], data_dict["Gen_Exciters"][!,"Machine Controls"])[1]
         Exciter_data = data_dict["Gen_Exciters"][Exciter_id,:]
         # vref = data_dict["Gen_Vref"][Exciter_id, "A"]
-        vref = string(pm_data.data["bus"]["$(gen["gen_bus"])"]["vm"])
+        vref = string(pm_data.data["bus"][gen["gen_bus"]]["vm"])
         
         PSS_id = findall(x->x=="PSS2B_"*gen["name"], data_dict["Gen_Stabilizers"][!,"Machine Controls"])[1]
         PSS_data = data_dict["Gen_Stabilizers"][PSS_id,:]
@@ -152,7 +154,7 @@ for (i, gen) in pm_data.data["gen"]
     else
         # @show gen["gen_bus"]
         
-        bus_name = pm_data.data["bus"]["$(gen["gen_bus"])"]["name"]
+        bus_name = pm_data.data["bus"][gen["gen_bus"]]["name"]
         bus = sys.data.components.data[ACBus][bus_name]
         sta_src = statis_source(gen, bus)
 
@@ -173,6 +175,8 @@ time_span = (0.0, 1.0)
 sim = PSD.Simulation(ResidualModel, sys, pwd(), time_span)
 res_small_signal_before_fault = small_signal_analysis(sim)
 plot(res_small_signal_before_fault.eigenvalues, seriestype=:scatter, xlim=(-1,1))
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_fault_eigenvalues.png"))
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_fault_eigenvalues.pdf"))
 
 # """ 
 # A good sanity check it running a power flow on the system to make sure all the components are properly scaled
@@ -184,6 +188,8 @@ plot(res_small_signal_before_fault.eigenvalues, seriestype=:scatter, xlim=(-1,1)
 # res_pf["flow_results"]
 # res_pf["bus_results"]
 # plot(res_pf["bus_results"][!,"Vm"], seriestype=:scatter)
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_fault_vm.png"))
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_fault_vm.pdf"))
 
 ##
 
@@ -200,6 +206,8 @@ res_rodas = read_results(sim_rodas)
 
 res_small_signal_after_fault = small_signal_analysis(sim_rodas)
 plot!(res_small_signal_after_fault.eigenvalues, seriestype=:scatter, xlim=(-1,0))
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_after_fault_eigenvalues.jpg"))
+savefig(joinpath(DIR_DYNAMIC, "plots", "before_after_fault_eigenvalues.pdf"))
 
 
 plt = plot()
